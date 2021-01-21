@@ -2,11 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import CreateView, ListView
 
 from recipes.forms import RecipeForm
-from recipes.models import Tag, Ingredient, Recipe, RecipeIngredient
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Favorite
 
 
 def index(request):
-    # post_list = Post.objects.all()
+    recipes = Recipe.objects.all()
+    favorite_recipes_id = set()
+    if request.user.is_authenticated:
+        favorites = Favorite.objects.filter(user=request.user)
+        for el in favorites:
+            favorite_recipes_id.add(el.recipe.pk)
     # paginator = Paginator(post_list, 10)
     # page_number = request.GET.get("page")
     # page = paginator.get_page(page_number)
@@ -14,12 +19,26 @@ def index(request):
     return render(
         request,
         "index.html",
-        # {
-        #     "page": page,
+        {
+            "recipes": recipes,
+            "favorites": favorite_recipes_id,
         #     "paginator": paginator
-        # }
+        }
     )
 
+def get_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, pk=recipe_id)
+    ingredients = recipe.recipe_ingredients.all()
+    return render(
+        request,
+        "recipe.html",
+        {
+            "recipe": recipe,
+            # "favorites": favorite_recipes_id,
+            'ingredients': ingredients,
+            #     "paginator": paginator
+        }
+    )
 
 class RecipeListView(ListView):
     model = Recipe
@@ -35,21 +54,16 @@ class CreateRecipeView(CreateView):
 def new(request):
     if request.method == "POST":
         ingredients = []
-        marker = 0
-        index = 1
-        while marker < 10:
-            name = request.POST.get('nameIngredient_' + str(index))
-            if name:
-                value = request.POST.get('valueIngredient_' + str(index))
+        for key in request.POST:
+            if 'nameIngredient' in key:
+                name = request.POST.get(key)
+                value = request.POST.get('valueIngredient_' + key[15:])
                 ingredients.append(
                     {
                         'name': name,
                         'value': int(value)
                     }
                 )
-            else:
-                marker += 1
-            index += 1
         recipe_ingredients = []
         for el in ingredients:
             ingredient = get_object_or_404(Ingredient, title=el.get('name'))
@@ -59,10 +73,11 @@ def new(request):
             )
             recipe_ingredients.append(recipe_ingredient)
 
-        data = {}
-        data['title'] = request.POST.getlist('name')[0]
-        data['time'] = request.POST.getlist('name')[1]
-        data['description'] = request.POST.getlist('description')[0]
+        data = {
+            'title': request.POST.getlist('name')[0],
+            'time': request.POST.getlist('name')[1],
+            'description': request.POST.getlist('description')[0]
+        }
         # data['image'] = request.FILES.get('file')
         tags = {
             'breakfast': False,
@@ -89,18 +104,20 @@ def new(request):
                 recipe.is_dinner = True
             if tags['lunch']:
                 recipe.is_lunch = True
-            # for tag in tags:
-            #     # Tag.objects.create(title=tag)
-            #     tag = get_object_or_404(Tag, title=tag)
-            #     recipe.tag.add(tag)
             recipe.author = request.user
             recipe.save()
             for el in recipe_ingredients:
                 el.recipe = recipe
                 el.save()
             return redirect("index")
-        else:
-            print(form.errors)
         return render(request, "new.html", {"errors": form.errors})
     form = RecipeForm()
     return render(request, "new.html", {"form": form})
+
+
+def edit_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, pk=recipe_id)
+    if request.user != recipe.author:
+        return redirect("index")
+
+    return None

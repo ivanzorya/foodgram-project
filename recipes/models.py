@@ -2,13 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-class Tag(models.Model):
-    title = models.TextField(
-        verbose_name="Тег",
-        max_length=10
-    )
-
-
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
@@ -29,7 +22,6 @@ class Recipe(models.Model):
         max_length=2000,
         help_text="Соблюдайте правила орфографии и пунктуации"
     )
-    # tag = models.ManyToManyField(Tag, verbose_name="Тег")
     time = models.PositiveIntegerField(
         verbose_name="Время приготовления",
     )
@@ -69,19 +61,19 @@ class RecipeIngredient(models.Model):
     )
 
 
-class RecipeFakeIngredient(models.Model):
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        User,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="favorites",
+        verbose_name="Пользователь"
+    )
     recipe = models.ForeignKey(
         Recipe,
         null=True,
         on_delete=models.CASCADE,
+        related_name="favorites",
         verbose_name="Рецепт"
-    )
-    ingredient = models.ForeignKey(
-        Ingredient,
-        null=True,
-        on_delete=models.CASCADE,
-        verbose_name="Ингредиент"
-    )
-    count = models.PositiveIntegerField(
-        verbose_name="Количество",
     )

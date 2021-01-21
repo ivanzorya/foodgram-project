@@ -3,10 +3,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # path("", views.index, name="index"),
+    path("", views.index, name="index"),
     # path("new/", views.CreateRecipeView, name="new"),
-    path("", views.RecipeListView.as_view(), name="index"),
-    path("new/", views.new, name="new")
+    # path("", views.RecipeListView.as_view(), name="index"),
+    path("new/", views.new, name="new"),
+    path("edit/<int:recipe_id>", views.edit_recipe, name="edit"),
+    path("recipes/<int:recipe_id>", views.get_recipe, name="recipe"),
     # path("group/<str:slug>", views.group_posts, name="group"),
     # path("new", views.new_post, name="new_post"),
     # path("follow/", views.follow_index, name="follow_index"),

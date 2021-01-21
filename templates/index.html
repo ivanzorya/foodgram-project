@@ -30,18 +30,15 @@
         </div>
         <div class="card-list">
 
-        {% for el in object_list %}
+        {% for el in recipes %}
 
 
 
-            <div class="card" data-id="120">
-
-
-                <a href="#" class="link" target="_blank"><img src="{{ el.image.url }}" alt="Какой-то текст" class="card__image"></a>
-
+            <div class="card" data-id="{{ el.pk }}">
+                <a href="{{ el.image.url }}" class="link" target="_blank"><img src="{{ el.image.url }}" alt="Какой-то текст" class="card__image"></a>
 
                 <div class="card__body">
-                    <a class="card__title link" href="#" target="_blank">{{ el.title }}</a>
+                    <a class="card__title link" href="{% url 'recipe' el.pk %}" target="_blank">{{ el.title }}</a>
                     <ul class="card__items">
                         {% if el.is_breakfast %}
                         <li class="card__item"><span class="badge badge_style_green">Завтрак</span></li>
@@ -63,6 +60,17 @@
                 </div>
                 <div class="card__footer">
                     <button class="button button_style_light-blue" name="purchases" data-out><span class="icon-plus button__icon"></span>Добавить в покупки</button>
+                    {% csrf_token %}
+                    {% if user.is_authenticated %}
+
+                        {% if el.pk in favorites %}
+                            <button class="button button_style_none" name="favorites"><span class="icon-favorite icon-favorite_active"></span></button>
+                        {% else %}
+                            <button class="button button_style_none" name="favorites" data-out><span class="icon-favorite"></span></button>
+                        {% endif %}
+{#                        <button class="button button_style_none" name="favorites"><span class="icon-favorite icon-favorite_active"></span></button>#}
+                    {% endif %}
+
                 </div>
             </div>
 
@@ -89,11 +97,20 @@
     <script src="{% static '/js/components/MainCards.js' %}"></script>
 
     <script src="{% static 'js/components/Purchases.js' %}"></script>
+    {% if user.is_authenticated %}
+        <script src="{% static 'js/components/Favorites.js' %}"></script>
+    {% endif %}
 
     <script src="{% static 'js/config/config.js' %}"></script>
     <script src="{% static 'js/components/CardList.js' %}"></script>
     <script src="{% static 'js/components/Header.js' %}"></script>
 
     <script src="{% static 'js/api/Api.js' %}"></script>
-    <script src="{% static 'indexNotAuth.js' %}"></script>
+
+    {% if user.is_authenticated %}
+        <script src="{% static 'indexAuth.js' %}"></script>
+    {% else %}
+        <script src="{% static 'indexNotAuth.js' %}"></script>
+    {% endif %}
+
 {% endblock scripts%}
