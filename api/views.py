@@ -1,11 +1,15 @@
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from recipes.models import Ingredient, Recipe, Favorite
+from recipes.models import Ingredient, Recipe, Favorite, ShoppingList
 from recipes.serializers import IngredientSerializer
+from users.models import Subscription
+
+User = get_user_model()
 
 
 @api_view(['GET'])
@@ -38,5 +42,51 @@ def delete_favorite(request, recipe_id):
         recipe__id=recipe_id
     )
     for el in favorites:
+        el.delete()
+    return Response({}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def add_subscription(request):
+    subscription = Subscription.objects.filter(
+        user=request.user,
+        author__id=request.data.get('id')
+    )
+    if not subscription:
+        author = get_object_or_404(User, pk=request.data.get('id'))
+        Subscription.objects.create(user=request.user, author=author)
+    return Response({}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+def delete_subscription(request, user_id):
+    subscriptions = Subscription.objects.filter(
+        user=request.user,
+        author__id=user_id
+    )
+    for el in subscriptions:
+        el.delete()
+    return Response({}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def add_purchase(request):
+    shopping_list = ShoppingList.objects.filter(
+        user=request.user,
+        recipe__id=request.data.get('id')
+    )
+    if not shopping_list:
+        recipe = get_object_or_404(Recipe, pk=request.data.get('id'))
+        ShoppingList.objects.create(user=request.user, recipe=recipe)
+    return Response({}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+def delete_purchase(request, recipe_id):
+    shopping_list = ShoppingList.objects.filter(
+        user=request.user,
+        recipe__id=recipe_id
+    )
+    for el in shopping_list:
         el.delete()
     return Response({}, status=status.HTTP_200_OK)

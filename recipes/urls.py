@@ -4,11 +4,15 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
-    # path("new/", views.CreateRecipeView, name="new"),
-    # path("", views.RecipeListView.as_view(), name="index"),
     path("new/", views.new, name="new"),
     path("edit/<int:recipe_id>", views.edit_recipe, name="edit"),
     path("recipes/<int:recipe_id>", views.get_recipe, name="recipe"),
+    path("delete/<int:recipe_id>", views.delete_recipe, name="delete"),
+    path("favorite/", views.get_favorities, name="favorite"),
+    path("follow/", views.get_follows, name="follow"),
+    path("author/<int:user_id>", views.get_author, name="author"),
+    path("shopping/", views.get_shopping_list, name="shopping"),
+    path("shopping/<int:recipe_id>", views.delete_shopping_list, name="delete_shopping"),
     # path("group/<str:slug>", views.group_posts, name="group"),
     # path("new", views.new_post, name="new_post"),
     # path("follow/", views.follow_index, name="follow_index"),
