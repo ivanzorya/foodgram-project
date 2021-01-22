@@ -55,11 +55,21 @@
                     </ul>
                     <div class="card__items card__items_column">
                         <p class="card__text"><span class="icon-time"></span> {{ el.time }} мин.</p>
-                        <p class="card__text"><span class="icon-user"></span> <a href="{% url 'author' el.author.pk %}" style="color: black">{{ el.author.username }}</a></p>
+                        <p class="card__text"><span class="icon-user"></span> <a href="{% url 'author' el.author.pk %}" style="color: #000000">{{ el.author.username }}</a></p>
                     </div>
                 </div>
                 <div class="card__footer">
-                    <button class="button button_style_light-blue" name="purchases" data-out><span class="icon-plus button__icon"></span>Добавить в покупки</button>
+                {% if el.pk in shopping_recipes %}
+                    <button class="button button_style_light-blue" name="purchases" ><span class="icon-plus button__icon"></span>Рецепт добавлен</button>
+
+                        {% else %}
+                           <button class="button button_style_light-blue" name="purchases" data-out><span class="icon-plus button__icon"></span>Добавить в покупки</button>
+
+                    {% endif %}
+
+{#                    <button class="button button_style_light-blue" name="purchases" data-out><span class="icon-plus button__icon"></span>Добавить в покупки</button>#}
+
+
                     {% csrf_token %}
                     {% if user.is_authenticated %}
 

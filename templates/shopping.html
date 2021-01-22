@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Список покупок<{% endblock %}
+{% block title %}Список покупок{% endblock %}
 
 {% block css %}
            <link rel="stylesheet" href="{% static 'pages/shopList.css' %}">
@@ -33,7 +33,7 @@
         </ul>
 
 
-        <a href="#"><button class="button button_style_blue">Скачать список</button></a>
+        <a href="{% url 'print' %}"><button class="button button_style_blue">Скачать список</button></a>
 
 
     </div>

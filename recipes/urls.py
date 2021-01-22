@@ -13,6 +13,7 @@ urlpatterns = [
     path("author/<int:user_id>", views.get_author, name="author"),
     path("shopping/", views.get_shopping_list, name="shopping"),
     path("shopping/<int:recipe_id>", views.delete_shopping_list, name="delete_shopping"),
+    path("print/", views.get_txt, name="print"),
     # path("group/<str:slug>", views.group_posts, name="group"),
     # path("new", views.new_post, name="new_post"),
     # path("follow/", views.follow_index, name="follow_index"),

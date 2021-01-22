@@ -1,11 +1,14 @@
+import mimetypes
+from datetime import datetime
+
 from django.contrib.auth import get_user_model
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from recipes.forms import RecipeForm
 from recipes.models import Ingredient, Recipe, RecipeIngredient, Favorite, \
     ShoppingList
 from users.models import Subscription
-
 
 User = get_user_model()
 
@@ -26,9 +29,9 @@ def index(request):
         favorites = request.user.favorites.all()
         for el in favorites:
             favorite_recipes_id.add(el.recipe.pk)
-    # paginator = Paginator(post_list, 10)
-    # page_number = request.GET.get("page")
-    # page = paginator.get_page(page_number)
+        # paginator = Paginator(post_list, 10)
+        # page_number = request.GET.get("page")
+        # page = paginator.get_page(page_number)
         shopping_count, shopping_recipes = shopping_counter(request.user)
     return render(
         request,
@@ -66,7 +69,6 @@ def get_favorities(request):
             'shopping_count': shopping_count,
             'shopping_recipes': shopping_recipes,
 
-
         }
     )
 
@@ -79,7 +81,8 @@ def get_recipe(request, recipe_id):
     shopping_count, shopping_recipes = 0, set()
     if request.user.is_authenticated:
         favorite = Favorite.objects.filter(user=request.user, recipe=recipe)
-        is_follower = Subscription.objects.filter(user=request.user, author=recipe.author)
+        is_follower = Subscription.objects.filter(user=request.user,
+                                                  author=recipe.author)
         if is_follower:
             follow = True
         shopping_count, shopping_recipes = shopping_counter(request.user)
@@ -134,7 +137,7 @@ def new(request):
             'breakfast': False,
             'lunch': False,
             'dinner': False
-                }
+        }
         for eat in ['breakfast', 'lunch', 'dinner']:
             if request.POST.getlist(eat):
                 tags[eat] = True
@@ -144,10 +147,10 @@ def new(request):
         if form.is_valid():
 
             recipe = Recipe.objects.create(
-                    title=form.cleaned_data.get('title'),
-                    description=form.cleaned_data.get('description'),
-                    time=form.cleaned_data.get('time')
-                )
+                title=form.cleaned_data.get('title'),
+                description=form.cleaned_data.get('description'),
+                time=form.cleaned_data.get('time')
+            )
             recipe.image = request.FILES.get('file')
             if tags['breakfast']:
                 recipe.is_breakfast = True
@@ -210,7 +213,6 @@ def edit_recipe(request, recipe_id):
                 recipe=recipe
             )
 
-
         data = {
             'title': request.POST.getlist('name')[0],
             'time': request.POST.getlist('name')[1],
@@ -221,7 +223,7 @@ def edit_recipe(request, recipe_id):
             'breakfast': False,
             'lunch': False,
             'dinner': False
-                }
+        }
         for eat in ['breakfast', 'lunch', 'dinner']:
             if request.POST.getlist(eat):
                 tags[eat] = True
@@ -344,6 +346,7 @@ def get_author(request, user_id):
 def get_shopping_list(request):
     if not request.user.is_authenticated:
         return redirect("index")
+    make_shopping_list(request)
     shopping_count, _ = shopping_counter(request.user)
     shopping_lists = request.user.shopping_lists.all()
     recipes = []
@@ -373,3 +376,55 @@ def delete_shopping_list(request, recipe_id):
     for el in shopping_list:
         el.delete()
     return redirect("shopping")
+
+
+def make_shopping_list(request):
+    shopping = request.user.shopping_lists.all()
+    recipes = []
+    for el in shopping:
+        recipes.append(el.recipe)
+    recipes_ingredients = []
+    for el in recipes:
+        recipes_ingredients += el.recipe_ingredients.all()
+    data = {}
+    for el in recipes_ingredients:
+        if el.ingredient.title in data:
+            data[el.ingredient.title][0] += el.count
+
+        else:
+            data[el.ingredient.title] = [el.count, el.ingredient.dimension]
+    return data
+
+
+def get_txt(request):
+    if not request.user.is_authenticated:
+        return redirect("index")
+    data = make_shopping_list(request)
+    date = datetime.now().date()
+    f = open('shopping_list.txt', 'w', encoding='utf-8')
+    f.write(
+        f'Список покупок {request.user.username}. Дата {date}.\n\n'
+        '\n\n'
+    )
+    i = 1
+    for item in data:
+        if i < 10:
+            j = ' '
+        else:
+            j = ''
+        f.write(
+            f'{j}{i}. [ ]  {item} {data.get(item)[0]} {data.get(item)[1]}.\n\n'
+        )
+        i += 1
+
+    f.close()
+    fl_path = 'shopping_list.txt'
+    filename = f'shopping_list_{request.user.username}_{date}.txt'
+
+    fl = open(fl_path, 'r')
+    mime_type, _ = mimetypes.guess_type(fl_path)
+    response = HttpResponse(fl, content_type=mime_type)
+    response['Content-Disposition'] = f"attachment; filename={filename}"
+    return response
+
+
