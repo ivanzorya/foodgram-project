@@ -57,53 +57,13 @@
     {% endfor %}
 
 
-
-{#        {% for el in follows %}#}
-{##}
-{#        <div class="card-user" data-author="{{ el.author.pk }}">#}
-{#        <div class="card-user__header">#}
-{#            <h2 class="card-user__title">{{ el.author.username }}</h2>#}
-{#        </div>#}
-{#        <div class="card-user__body">#}
-{#            <ul class="card-user__items">#}
-{##}
-{#                {% for recipe in el.author.recipes.all %}#}
-{##}
-{#                <li class="card-user__item">#}
-{#                    <div class="recipe">#}
-{#                        <img src="{% static 'images/testCardImg.png' %}" alt="какой-то-текст" class="recipe__image">#}
-{#                        <h3 class="recipe__title">Французские тосты</h3>#}
-{#                        <p class="recipe__text"><span class="icon-time"></span> 20 мин.</p>#}
-{#                    </div>#}
-{#                </li>#}
-{##}
-{#                {% endfor %}#}
-{##}
-{#                <li class="card-user__item">#}
-{#                    <a href="#" class="card-user__link link">Еще 7 рецептов...</a>#}
-{#                </li>#}
-{#            </ul>#}
-{#        </div>#}
-{#        <div class="card-user__footer">#}
-{#                <button class="button button_style_light-blue button_size_auto" name="subscribe">Отписаться</button>#}
-{#            </div>#}
-{#    </div>#}
-{##}
-{#    {% endfor %}#}
-
-
     </div>
-    <nav class="pagination" aria-label="Search results pages">
-        <ul class="pagination__container">
-            <li class="pagination__item"><a class="pagination__link link" href="#"><span class="icon-left"></span></a></li>
-            <li class="pagination__item pagination__item_active"><a class="pagination__link link" href="#">1</a></li>
-            <li class="pagination__item"><a class="pagination__link link" href="#">2</a></li>
-            <li class="pagination__item"><a class="pagination__link link" href="#">3</a></li>
-            <li class="pagination__item"><a class="pagination__link link" href="#">4</a></li>
-            <li class="pagination__item"><a class="pagination__link link" href="#">5</a></li>
-            <li class="pagination__item"><a class="pagination__link link" href="#"><span class="icon-right"></span></a></li>
-        </ul>
-    </nav>
+
+
+    {% if data.has_other_pages %}
+        {% include "paginator.html" with items=data paginator=paginator %}
+    {% endif %}
+
 </main>
 
 {% endblock content%}
@@ -113,7 +73,7 @@
 
 
     <script src="{% static 'js/config/config.js' %}"></script>
-    <script src="{% static '/js/components/MainCards.js' %}"></script>
+    <script src="{% static 'js/components/MainCards.js' %}"></script>
     <script src="{% static 'js/components/MyFollow.js' %}"></script>
     <script src="{% static 'js/components/Subscribe.js' %}"></script>
     <script src="{% static 'js/components/Header.js' %}"></script>

@@ -55,9 +55,9 @@
                 </div>
                 <ul class="single-card__items">
 
-                    {% if el.pk in shopping_recipes %}
+                    {% if recipe.pk in shopping_recipes %}
 
-                        <li class="single-card__item"><button class="button button_style_blue" name="purchases"><span class="icon-plus"></span>Рецепт добавлен</button></li>
+                        <li class="single-card__item"><button class="button button_style_light-blue-outline" name="purchases"><span class="icon-check"></span>Рецепт добавлен</button></li>
 
                         {% else %}
 
@@ -70,7 +70,7 @@
 
 
                         {% if follow %}
-                    <li class="single-card__item"><button class="button button_style_light-blue button_size_subscribe" name="subscribe" >Отписаться от автора</button></li>
+                    <li class="single-card__item"><button class="button button_style_light-blue-outline button_size_subscribe" name="subscribe" >Отписаться от автора</button></li>
                         {% else %}
                     <li class="single-card__item"><button class="button button_style_light-blue button_size_subscribe" name="subscribe" data-out>Подписаться на автора</button></li>
                         {% endif %}

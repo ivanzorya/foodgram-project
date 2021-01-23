@@ -77,7 +77,7 @@
             <div class="form__group">
                 <label for="id_time" class="form__label">Время приготовления</label>
                 <div class="form__field-group form__field-group_time">
-                    <input type="text" id="id_time" name="name" class="form__input" value="{{ recipe.time }}">
+                    <input type="number" id="id_time" name="name" class="form__input" min="0" value="{{ recipe.time }}">
                     <label for="id_time" class="form__label">минут</label>
                     <span class="form__error"></span>
                 </div>

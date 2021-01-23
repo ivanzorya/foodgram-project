@@ -5,13 +5,11 @@ from django.contrib.auth.models import User
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
-        blank=True,
-        null=True,
         on_delete=models.CASCADE,
         related_name="recipes",
         verbose_name="Автор рецепта"
     )
-    image = models.ImageField(upload_to='recipes/', blank=True, null=True)
+    image = models.ImageField(upload_to='recipes/')
     title = models.TextField(
         verbose_name="Название рецепта",
         max_length=200,
@@ -28,6 +26,9 @@ class Recipe(models.Model):
     is_lunch = models.BooleanField(default=False)
     is_breakfast = models.BooleanField(default=False)
     is_dinner = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-pk"]
 
 
 class Ingredient(models.Model):

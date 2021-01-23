@@ -1,0 +1,28 @@
+<ul class="tags">
+    <li class="tags__item">
+        {% if tags.breakfast %}
+            <a id="breakfast" class="tags__checkbox tags__checkbox_style_orange tags__checkbox_active " href="?tag="></a>
+        {% else %}
+            <a id="breakfast" class="tags__checkbox tags__checkbox_style_orange" href="?tag=breakfast"></a>
+        {% endif %}
+
+        <span class="tags__label">Завтрак</span>
+    </li>
+    <li class="tags__item">
+
+        {% if tags.lunch %}
+            <a id="lunch" class="tags__checkbox tags__checkbox_style_green tags__checkbox_active " href="?tag="></a>
+        {% else %}
+            <a id="lunch" class="tags__checkbox tags__checkbox_style_green" href="?tag=lunch"></a>
+        {% endif %}
+        <span class="tags__label">Обед</span>
+    </li>
+    <li class="tags__item">
+        {% if tags.dinner %}
+            <a id="dinner" class="tags__checkbox tags__checkbox_style_purple tags__checkbox_active " href="?tag="></a>
+        {% else %}
+            <a id="dinner" class="tags__checkbox tags__checkbox_style_purple  " href="?tag=dinner"></a>
+        {% endif %}
+        <span class="tags__label">Ужин</span>
+    </li>
+</ul>

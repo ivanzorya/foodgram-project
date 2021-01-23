@@ -20,10 +20,10 @@ class RecipeForm(forms.Form):
     class Meta:
         model = Recipe
 
-    title = forms.CharField(required=False)
+    title = forms.CharField()
     # breakfast = forms.BooleanField(required=False)
     # lunch = forms.BooleanField(required=False)
     # dinner = forms.BooleanField(required=False)
-    description = forms.CharField(required=False)
-    time = forms.IntegerField(required=False)
+    description = forms.CharField()
+    time = forms.IntegerField()
     # image = forms.ImageField(required=False)

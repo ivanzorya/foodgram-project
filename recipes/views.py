@@ -2,18 +2,32 @@ import mimetypes
 from datetime import datetime
 
 from django.contrib.auth import get_user_model
+from django.core.paginator import Paginator
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from recipes.forms import RecipeForm
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Favorite, \
-    ShoppingList
+from recipes.models import (
+    Ingredient, Recipe, RecipeIngredient, Favorite, ShoppingList
+)
 from users.models import Subscription
 
 User = get_user_model()
 
+RECIPE_ON_PAGE = 6
+
+
+def delete_recipe(request, recipe_id):
+    recipe = get_object_or_404(Recipe, pk=recipe_id)
+    if request.user != recipe.author:
+        return redirect("index")
+    recipe.delete()
+    return redirect("index")
+
 
 def shopping_counter(user):
+    if not user.is_authenticated:
+        return 0, set()
     shopping = user.shopping_lists.all()
     shopping_recipes = set()
     for el in shopping:
@@ -21,18 +35,44 @@ def shopping_counter(user):
     return len(shopping), shopping_recipes
 
 
-def index(request):
-    recipes = Recipe.objects.all()
+def get_favorite_recipes_id(request):
+    if not request.user.is_authenticated:
+        return set()
     favorite_recipes_id = set()
-    shopping_count, shopping_recipes = 0, set()
-    if request.user.is_authenticated:
-        favorites = request.user.favorites.all()
-        for el in favorites:
-            favorite_recipes_id.add(el.recipe.pk)
-        # paginator = Paginator(post_list, 10)
-        # page_number = request.GET.get("page")
-        # page = paginator.get_page(page_number)
-        shopping_count, shopping_recipes = shopping_counter(request.user)
+    favorites = request.user.favorites.all()
+    for el in favorites:
+        favorite_recipes_id.add(el.recipe.pk)
+    return favorite_recipes_id
+
+
+def check_tags(queryset, tag):
+    tags = {
+        'breakfast': False,
+        'lunch': False,
+        'dinner': False
+    }
+    if not tag:
+        return queryset, None, tags
+    tags[tag] = True
+    if tag == 'breakfast':
+        queryset = queryset.filter(is_breakfast=True)
+    if tag == 'dinner':
+        queryset = queryset.filter(is_dinner=True)
+    if tag == 'lunch':
+        queryset = queryset.filter(is_lunch=True)
+    return queryset, tag, tags
+
+
+def index(request):
+    recipes, tag, tags = check_tags(
+        Recipe.objects.all(),
+        request.GET.get("tag")
+    )
+    favorite_recipes_id = get_favorite_recipes_id(request)
+    shopping_count, shopping_recipes = shopping_counter(request.user)
+    paginator = Paginator(recipes, RECIPE_ON_PAGE)
+    page_number = request.GET.get("page")
+    recipes = paginator.get_page(page_number)
     return render(
         request,
         "index.html",
@@ -40,9 +80,11 @@ def index(request):
             "recipes": recipes,
             "favorites": favorite_recipes_id,
             'index': True,
-            # "paginator": paginator,
+            "paginator": paginator,
             'shopping_count': shopping_count,
             'shopping_recipes': shopping_recipes,
+            'tags': tags,
+            'tag': tag
         }
     )
 
@@ -53,11 +95,16 @@ def get_favorities(request):
     favorites = request.user.favorites.all()
     recipes = []
     for el in favorites:
-        recipes.append(el.recipe)
-    favorite_recipes_id = set()
-    for el in favorites:
-        favorite_recipes_id.add(el.recipe.pk)
+        recipes.append(el.recipe.pk)
+    recipes, tag, tags = check_tags(
+        Recipe.objects.filter(pk__in=recipes),
+        request.GET.get("tag")
+    )
+    favorite_recipes_id = get_favorite_recipes_id(request)
     shopping_count, shopping_recipes = shopping_counter(request.user)
+    paginator = Paginator(recipes, RECIPE_ON_PAGE)
+    page_number = request.GET.get("page")
+    recipes = paginator.get_page(page_number)
     return render(
         request,
         "favorite.html",
@@ -65,10 +112,45 @@ def get_favorities(request):
             "recipes": recipes,
             "favorites": favorite_recipes_id,
             'favorite': True,
-            #     "paginator": paginator,
+            "paginator": paginator,
             'shopping_count': shopping_count,
             'shopping_recipes': shopping_recipes,
+            'tags': tags,
+            'tag': tag,
 
+        }
+    )
+
+
+def get_author(request, user_id):
+    author = get_object_or_404(User, pk=user_id)
+    recipes, tag, tags = check_tags(
+        author.recipes.all(),
+        request.GET.get("tag")
+    )
+    favorite_recipes_id = get_favorite_recipes_id(request)
+    shopping_count, shopping_recipes = shopping_counter(request.user)
+    follow = False
+    if request.user.is_authenticated:
+        is_follower = request.user.subscriptions.filter(author=author)
+        if is_follower:
+            follow = True
+    paginator = Paginator(recipes, RECIPE_ON_PAGE)
+    page_number = request.GET.get("page")
+    recipes = paginator.get_page(page_number)
+    return render(
+        request,
+        "author.html",
+        {
+            "recipes": recipes,
+            "favorites": favorite_recipes_id,
+            'author': author,
+            'follow': follow,
+            "paginator": paginator,
+            'shopping_count': shopping_count,
+            'shopping_recipes': shopping_recipes,
+            'tag': tag,
+            'tags': tags,
         }
     )
 
@@ -78,14 +160,15 @@ def get_recipe(request, recipe_id):
     ingredients = recipe.recipe_ingredients.all()
     favorite = []
     follow = False
-    shopping_count, shopping_recipes = 0, set()
+    shopping_count, shopping_recipes = shopping_counter(request.user)
     if request.user.is_authenticated:
         favorite = Favorite.objects.filter(user=request.user, recipe=recipe)
-        is_follower = Subscription.objects.filter(user=request.user,
-                                                  author=recipe.author)
+        is_follower = Subscription.objects.filter(
+            user=request.user,
+            author=recipe.author
+        )
         if is_follower:
             follow = True
-        shopping_count, shopping_recipes = shopping_counter(request.user)
     return render(
         request,
         "recipe.html",
@@ -100,6 +183,129 @@ def get_recipe(request, recipe_id):
             'shopping_recipes': shopping_recipes,
         }
     )
+
+
+def get_follows(request):
+    if not request.user.is_authenticated:
+        return redirect("index")
+    shopping_count, _ = shopping_counter(request.user)
+    follows = request.user.subscriptions.all()
+
+    data = []
+
+    for follow in follows:
+        recipes = follow.author.recipes.all()
+        temp_data = {
+            'author': follow.author,
+            'recipes': recipes[:3],
+            'count': len(recipes) - 3
+        }
+        data.append(temp_data)
+    paginator = Paginator(data, RECIPE_ON_PAGE)
+    page_number = request.GET.get("page")
+    data = paginator.get_page(page_number)
+    return render(
+        request,
+        "follow.html",
+        {
+            'follows': follows,
+            'subscription': True,
+            'data': data,
+            # "recipe": recipe,
+            # "favorites": favorite_recipes_id,
+            # 'ingredients': ingredients,
+            # 'favorite': favorite,
+            # 'follow': follow,
+            "paginator": paginator,
+            'shopping_count': shopping_count,
+        }
+    )
+
+
+def get_shopping_list(request):
+    if not request.user.is_authenticated:
+        return redirect("index")
+    make_shopping_list(request)
+    shopping_count, _ = shopping_counter(request.user)
+    shopping_lists = request.user.shopping_lists.all()
+    recipes = []
+    for el in shopping_lists:
+        recipes.append(el.recipe)
+
+    return render(
+        request,
+        "shopping.html",
+        {
+            "recipes": recipes,
+            # "favorites": favorite_recipes_id,
+            'shopping': True,
+            #     "paginator": paginator,
+            'shopping_count': shopping_count
+        }
+    )
+
+
+def delete_shopping_list(request, recipe_id):
+    if not request.user.is_authenticated:
+        return redirect("index")
+    shopping_list = ShoppingList.objects.filter(
+        user=request.user,
+        recipe__id=recipe_id
+    )
+    for el in shopping_list:
+        el.delete()
+    return redirect("shopping")
+
+
+def make_shopping_list(request):
+    shopping = request.user.shopping_lists.all()
+    recipes = []
+    for el in shopping:
+        recipes.append(el.recipe)
+    recipes_ingredients = []
+    for el in recipes:
+        recipes_ingredients += el.recipe_ingredients.all()
+    data = {}
+    for el in recipes_ingredients:
+        if el.ingredient.title in data:
+            data[el.ingredient.title][0] += el.count
+
+        else:
+            data[el.ingredient.title] = [el.count, el.ingredient.dimension]
+    return data
+
+
+def get_txt(request):
+    if not request.user.is_authenticated:
+        return redirect("index")
+    data = make_shopping_list(request)
+    date = datetime.now().date()
+    f = open('shopping_list.txt', 'w', encoding='utf-8')
+    f.write(
+        '\n'
+        f'Список покупок {request.user.username}. Дата {date}.\n\n'
+        '\n'
+    )
+    i = 1
+    for item in data:
+        if i < 10:
+            j = ' '
+        else:
+            j = ''
+        f.write(
+            f'{j}{i}. [ ]  {item} {data.get(item)[0]} {data.get(item)[1]}.\n\n'
+        )
+        i += 1
+
+    f.close()
+    fl_path = 'shopping_list.txt'
+    filename = f'shopping_list_{request.user.username}_{date}.txt'
+
+    fl = open(fl_path, 'r')
+    mime_type, _ = mimetypes.guess_type(fl_path)
+    response = HttpResponse(fl, content_type=mime_type)
+    response['Content-Disposition'] = f"attachment; filename={filename}"
+    return response
 
 
 def new(request):
@@ -173,12 +379,12 @@ def new(request):
                 'shopping_count': shopping_count
             }
         )
-    form = RecipeForm()
+    # form = RecipeForm()
     return render(
         request,
         "new.html",
         {
-            "form": form,
+            # "form": form,
             'new': True,
             'shopping_count': shopping_count,
         }
@@ -264,167 +470,3 @@ def edit_recipe(request, recipe_id):
             'shopping_count': shopping_count,
         }
     )
-
-
-def delete_recipe(request, recipe_id):
-    recipe = get_object_or_404(Recipe, pk=recipe_id)
-    if request.user != recipe.author:
-        return redirect("index")
-    recipe.delete()
-    return redirect("index")
-
-
-def get_follows(request):
-    if not request.user.is_authenticated:
-        return redirect("index")
-    shopping_count, _ = shopping_counter(request.user)
-    follows = request.user.subscriptions.all()
-
-    data = []
-
-    for follow in follows:
-        recipes = follow.author.recipes.all()
-        temp_data = {
-            'author': follow.author,
-            'recipes': recipes[:3],
-            'count': len(recipes) - 3
-        }
-        data.append(temp_data)
-
-    return render(
-        request,
-        "follow.html",
-        {
-            'follows': follows,
-            'subscription': True,
-            'data': data,
-            # "recipe": recipe,
-            # "favorites": favorite_recipes_id,
-            # 'ingredients': ingredients,
-            # 'favorite': favorite,
-            # 'follow': follow,
-            #     "paginator": paginator,
-            'shopping_count': shopping_count,
-        }
-    )
-
-
-def get_author(request, user_id):
-    author = get_object_or_404(User, pk=user_id)
-    recipes = author.recipes.all()
-    favorite_recipes_id = set()
-    shopping_count, shopping_recipes = 0, set()
-    if request.user.is_authenticated:
-        favorites = request.user.favorites.all()
-        for el in favorites:
-            favorite_recipes_id.add(el.recipe.pk)
-        shopping_count, shopping_recipes = shopping_counter(request.user)
-    follow = False
-    if request.user.is_authenticated:
-        is_follower = request.user.subscriptions.filter(author=author)
-        if is_follower:
-            follow = True
-    # paginator = Paginator(post_list, 10)
-    # page_number = request.GET.get("page")
-    # page = paginator.get_page(page_number)
-    # add_ingredients()
-    return render(
-        request,
-        "author.html",
-        {
-            "recipes": recipes,
-            "favorites": favorite_recipes_id,
-            'author': author,
-            'follow': follow,
-            #     "paginator": paginator,
-            'shopping_count': shopping_count,
-            'shopping_recipes': shopping_recipes,
-        }
-    )
-
-
-def get_shopping_list(request):
-    if not request.user.is_authenticated:
-        return redirect("index")
-    make_shopping_list(request)
-    shopping_count, _ = shopping_counter(request.user)
-    shopping_lists = request.user.shopping_lists.all()
-    recipes = []
-    for el in shopping_lists:
-        recipes.append(el.recipe)
-
-    return render(
-        request,
-        "shopping.html",
-        {
-            "recipes": recipes,
-            # "favorites": favorite_recipes_id,
-            'shopping': True,
-            #     "paginator": paginator,
-            'shopping_count': shopping_count
-        }
-    )
-
-
-def delete_shopping_list(request, recipe_id):
-    if not request.user.is_authenticated:
-        return redirect("index")
-    shopping_list = ShoppingList.objects.filter(
-        user=request.user,
-        recipe__id=recipe_id
-    )
-    for el in shopping_list:
-        el.delete()
-    return redirect("shopping")
-
-
-def make_shopping_list(request):
-    shopping = request.user.shopping_lists.all()
-    recipes = []
-    for el in shopping:
-        recipes.append(el.recipe)
-    recipes_ingredients = []
-    for el in recipes:
-        recipes_ingredients += el.recipe_ingredients.all()
-    data = {}
-    for el in recipes_ingredients:
-        if el.ingredient.title in data:
-            data[el.ingredient.title][0] += el.count
-
-        else:
-            data[el.ingredient.title] = [el.count, el.ingredient.dimension]
-    return data
-
-
-def get_txt(request):
-    if not request.user.is_authenticated:
-        return redirect("index")
-    data = make_shopping_list(request)
-    date = datetime.now().date()
-    f = open('shopping_list.txt', 'w', encoding='utf-8')
-    f.write(
-        f'Список покупок {request.user.username}. Дата {date}.\n\n'
-        '\n\n'
-    )
-    i = 1
-    for item in data:
-        if i < 10:
-            j = ' '
-        else:
-            j = ''
-        f.write(
-            f'{j}{i}. [ ]  {item} {data.get(item)[0]} {data.get(item)[1]}.\n\n'
-        )
-        i += 1
-
-    f.close()
-    fl_path = 'shopping_list.txt'
-    filename = f'shopping_list_{request.user.username}_{date}.txt'
-
-    fl = open(fl_path, 'r')
-    mime_type, _ = mimetypes.guess_type(fl_path)
-    response = HttpResponse(fl, content_type=mime_type)
-    response['Content-Disposition'] = f"attachment; filename={filename}"
-    return response
-
-
