@@ -7,9 +7,15 @@ class Recipe(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="recipes",
-        verbose_name="Автор рецепта"
+        verbose_name="Автор рецепта",
+        blank=True,
+        null=True,
     )
-    image = models.ImageField(upload_to='recipes/')
+    image = models.ImageField(
+        upload_to='recipes/',
+        blank=True,
+        null=True,
+    )
     title = models.TextField(
         verbose_name="Название рецепта",
         max_length=200,
@@ -28,6 +34,8 @@ class Recipe(models.Model):
     is_dinner = models.BooleanField(default=False)
 
     class Meta:
+        verbose_name = "Рецепт"
+        verbose_name_plural = "Рецепты"
         ordering = ["-pk"]
 
 
@@ -40,6 +48,10 @@ class Ingredient(models.Model):
         verbose_name="Единица измерения ингредиента",
         max_length=200
     )
+
+    class Meta:
+        verbose_name = "Ингредиент"
+        verbose_name_plural = "Ингредиенты"
 
 
 class RecipeIngredient(models.Model):
@@ -61,6 +73,10 @@ class RecipeIngredient(models.Model):
         verbose_name="Количество",
     )
 
+    class Meta:
+        verbose_name = "Ингредиент рецепта"
+        verbose_name_plural = "Ингредиенты рецептов"
+
 
 class Favorite(models.Model):
     user = models.ForeignKey(
@@ -79,6 +95,10 @@ class Favorite(models.Model):
         verbose_name="Рецепт"
     )
 
+    class Meta:
+        verbose_name = "Избранный рецепт"
+        verbose_name_plural = "Избранные рецепты"
+
 
 class ShoppingList(models.Model):
     user = models.ForeignKey(
@@ -96,3 +116,7 @@ class ShoppingList(models.Model):
         related_name="shopping_lists",
         verbose_name="Рецепт"
     )
+
+    class Meta:
+        verbose_name = "Список покупок"
+        verbose_name_plural = "Списки покупок"

@@ -16,13 +16,28 @@
         <h1 class="main__title">Создание рецепта</h1>
     </div>
     <div class="form-container">
+
+               {% for error in errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error.errors.as_text }}
+                </div>
+                {% endfor %}
+
+    {% if form.non_field_errors %}
+                <span class="form__error">
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
+                </span>
+            {% endif %}
+
         <form action="{% url 'new' %}" class="form" method="post" enctype="multipart/form-data">
                             {% csrf_token %}
             <div class="form__group">
                 <label for="id_name" class="form__label">Название рецепта</label>
                 <div class="form__field-group">
-                    <input type="text" id="id_name" name="name" class="form__input">
-                    <span class="form__error"></span>
+                    <input type="text" id="id_name" name="name" class="form__input" value="{{ fields.title }}">
+                    <span class="form__error">{% if errors.title %} Добавьте название {% endif %}</span>
                 </div>
             </div>
             <div class="form__group">
@@ -59,24 +74,35 @@
                     </div>
                     <div class="form__field-group-ingredientes-container">
 
+                        {% for el in fields.ingredients %}
+                        <div class="form__field-item-ingredient" id="ing_{{ el.pk }}">
+                            <span> {{ el.name }} {{ el.value }} {{ el.units }}.</span>
+                            <span class="form__field-item-delete"></span>
+                            <input id="nameIngredient_{{ el.pk }}" name="nameIngredient_{{ el.pk }}" type="hidden" value="{{ el.name }}">
+                            <input id="valueIngredient_{{ el.pk }}" name="valueIngredient_{{ el.pk }}" type="hidden" value="{{ el.value }}">
+                            <input id="unitsIngredient_{{ el.pk }}" name="unitsIngredient_{{ el.pk }}" type="hidden" value="{{ el.units}}">
+                        </div>
+                        {% endfor %}
+
+
                     </div>
                     <span class="form__ingredient-link" id="addIng">Добавить ингредиент</span>
-                    <span class="form__error"></span>
+                    <span class="form__error">{% if errors.ingredient %} Добавьте ингредиент {% endif %}</span>
                 </div>
             </div>
             <div class="form__group">
                 <label for="id_time" class="form__label">Время приготовления</label>
                 <div class="form__field-group form__field-group_time">
-                    <input type="number" id="id_time" name="name" class="form__input" min="0">
+                    <input type="number" id="id_time" name="name" class="form__input" min="0" value="{{ fields.time }}">
                     <label for="id_time" class="form__label">минут</label>
-                    <span class="form__error"></span>
+                    <span class="form__error">{% if errors.time %} Добавьте время {% endif %}</span>
                 </div>
             </div>
             <div class="form__group">
                 <label for="id_description" class="form__label">Описание</label>
                 <div class="form__field-group">
-                    <textarea name="description" id="id_description" rows="8" class="form__textarea"></textarea>
-                    <span class="form__error"></span>
+                    <textarea name="description" id="id_description" rows="8" class="form__textarea">{{ fields.description }}</textarea>
+                    <span class="form__error">{% if errors.description %} Добавьте описание {% endif %}</span>
                 </div>
             </div>
             <div class="form__group">
@@ -84,7 +110,7 @@
                 <div class="form__field-group">
                     <label for="id_file" class="form__file-button">Выбрать файл</label>
                     <input type="file" class="form__file" name="file" id="id_file">
-                    <span class="form__error"></span>
+                    <span class="form__error">{% if errors.image %} Добавьте картинку {% endif %}</span>
                 </div>
             </div>
             <div class="form__footer">

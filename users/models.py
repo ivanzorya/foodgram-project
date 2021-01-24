@@ -23,6 +23,3 @@ class Subscription(models.Model):
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
         ordering = ["author"]
-
-    def __str__(self):
-        return f"{self.user} подписан на {self.author}"

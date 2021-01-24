@@ -10,6 +10,10 @@ from recipes.forms import RecipeForm
 from recipes.models import (
     Ingredient, Recipe, RecipeIngredient, Favorite, ShoppingList
 )
+from recipes.utils import (
+    get_data_tags, update_tags, shopping_counter, make_shopping_list,
+    get_favorite_recipes_id, check_tags
+)
 from users.models import Subscription
 
 User = get_user_model()
@@ -23,44 +27,6 @@ def delete_recipe(request, recipe_id):
         return redirect("index")
     recipe.delete()
     return redirect("index")
-
-
-def shopping_counter(user):
-    if not user.is_authenticated:
-        return 0, set()
-    shopping = user.shopping_lists.all()
-    shopping_recipes = set()
-    for el in shopping:
-        shopping_recipes.add(el.recipe.pk)
-    return len(shopping), shopping_recipes
-
-
-def get_favorite_recipes_id(request):
-    if not request.user.is_authenticated:
-        return set()
-    favorite_recipes_id = set()
-    favorites = request.user.favorites.all()
-    for el in favorites:
-        favorite_recipes_id.add(el.recipe.pk)
-    return favorite_recipes_id
-
-
-def check_tags(queryset, tag):
-    tags = {
-        'breakfast': False,
-        'lunch': False,
-        'dinner': False
-    }
-    if not tag:
-        return queryset, None, tags
-    tags[tag] = True
-    if tag == 'breakfast':
-        queryset = queryset.filter(is_breakfast=True)
-    if tag == 'dinner':
-        queryset = queryset.filter(is_dinner=True)
-    if tag == 'lunch':
-        queryset = queryset.filter(is_lunch=True)
-    return queryset, tag, tags
 
 
 def index(request):
@@ -174,11 +140,9 @@ def get_recipe(request, recipe_id):
         "recipe.html",
         {
             "recipe": recipe,
-            # "favorites": favorite_recipes_id,
             'ingredients': ingredients,
             'favorite': favorite,
             'follow': follow,
-            # "paginator": paginator,
             'shopping_count': shopping_count,
             'shopping_recipes': shopping_recipes,
         }
@@ -190,9 +154,7 @@ def get_follows(request):
         return redirect("index")
     shopping_count, _ = shopping_counter(request.user)
     follows = request.user.subscriptions.all()
-
     data = []
-
     for follow in follows:
         recipes = follow.author.recipes.all()
         temp_data = {
@@ -211,11 +173,6 @@ def get_follows(request):
             'follows': follows,
             'subscription': True,
             'data': data,
-            # "recipe": recipe,
-            # "favorites": favorite_recipes_id,
-            # 'ingredients': ingredients,
-            # 'favorite': favorite,
-            # 'follow': follow,
             "paginator": paginator,
             'shopping_count': shopping_count,
         }
@@ -231,15 +188,12 @@ def get_shopping_list(request):
     recipes = []
     for el in shopping_lists:
         recipes.append(el.recipe)
-
     return render(
         request,
         "shopping.html",
         {
             "recipes": recipes,
-            # "favorites": favorite_recipes_id,
             'shopping': True,
-            #     "paginator": paginator,
             'shopping_count': shopping_count
         }
     )
@@ -255,24 +209,6 @@ def delete_shopping_list(request, recipe_id):
     for el in shopping_list:
         el.delete()
     return redirect("shopping")
-
-
-def make_shopping_list(request):
-    shopping = request.user.shopping_lists.all()
-    recipes = []
-    for el in shopping:
-        recipes.append(el.recipe)
-    recipes_ingredients = []
-    for el in recipes:
-        recipes_ingredients += el.recipe_ingredients.all()
-    data = {}
-    for el in recipes_ingredients:
-        if el.ingredient.title in data:
-            data[el.ingredient.title][0] += el.count
-
-        else:
-            data[el.ingredient.title] = [el.count, el.ingredient.dimension]
-    return data
 
 
 def get_txt(request):
@@ -313,17 +249,23 @@ def new(request):
         return redirect("index")
     shopping_count, _ = shopping_counter(request.user)
     if request.method == "POST":
+        errors = {}
+        fields = {'ingredients': []}
         ingredients = []
         for key in request.POST:
             if 'nameIngredient' in key:
                 name = request.POST.get(key)
+                ing_to_back = {'pk': key[15:], 'name': name}
                 value = request.POST.get('valueIngredient_' + key[15:])
+                ing_to_back['value'] = value
+                ing_to_back['units'] = request.POST.get('unitsIngredient_' + key[15:])
                 ingredients.append(
                     {
                         'name': name,
                         'value': int(value)
                     }
                 )
+                fields['ingredients'].append(ing_to_back)
         recipe_ingredients = []
         for el in ingredients:
             ingredient = get_object_or_404(Ingredient, title=el.get('name'))
@@ -332,59 +274,48 @@ def new(request):
                 count=el.get('value')
             )
             recipe_ingredients.append(recipe_ingredient)
-
-        data = {
-            'title': request.POST.getlist('name')[0],
-            'time': request.POST.getlist('name')[1],
-            'description': request.POST.getlist('description')[0]
-        }
-        # data['image'] = request.FILES.get('file')
-        tags = {
-            'breakfast': False,
-            'lunch': False,
-            'dinner': False
-        }
-        for eat in ['breakfast', 'lunch', 'dinner']:
-            if request.POST.getlist(eat):
-                tags[eat] = True
+        if not recipe_ingredients:
+            errors['ingredient'] = True
+        data, tags = get_data_tags(request)
+        for key in data:
+            fields[key] = data[key]
 
         form = RecipeForm(data=data)
-
-        if form.is_valid():
-
+        image = request.FILES.get('file')
+        if not image or 'image' not in image.content_type:
+            errors['image'] = True
+        else:
+            errors['image'] = False
+        if form.is_valid() and not errors['image'] and recipe_ingredients:
             recipe = Recipe.objects.create(
                 title=form.cleaned_data.get('title'),
                 description=form.cleaned_data.get('description'),
                 time=form.cleaned_data.get('time')
             )
             recipe.image = request.FILES.get('file')
-            if tags['breakfast']:
-                recipe.is_breakfast = True
-            if tags['dinner']:
-                recipe.is_dinner = True
-            if tags['lunch']:
-                recipe.is_lunch = True
+            recipe = update_tags(tags, recipe)
             recipe.author = request.user
             recipe.save()
             for el in recipe_ingredients:
                 el.recipe = recipe
                 el.save()
             return redirect("recipe", recipe.pk)
+        for error in form.errors:
+            errors[error] = True
         return render(
             request,
             "new.html",
             {
-                "errors": form.errors,
+                "errors": errors,
                 'new': True,
-                'shopping_count': shopping_count
+                'shopping_count': shopping_count,
+                'fields': fields
             }
         )
-    # form = RecipeForm()
     return render(
         request,
         "new.html",
         {
-            # "form": form,
             'new': True,
             'shopping_count': shopping_count,
         }
@@ -397,6 +328,7 @@ def edit_recipe(request, recipe_id):
         return redirect("index")
     shopping_count, _ = shopping_counter(request.user)
     if request.method == "POST":
+        errors = {}
         ingredients = []
         for key in request.POST:
             if 'nameIngredient' in key:
@@ -413,58 +345,47 @@ def edit_recipe(request, recipe_id):
             el.delete()
         for el in ingredients:
             ingredient = get_object_or_404(Ingredient, title=el.get('name'))
-            recipe_ingredient = RecipeIngredient.objects.create(
+            RecipeIngredient.objects.create(
                 ingredient=ingredient,
                 count=el.get('value'),
                 recipe=recipe
             )
-
-        data = {
-            'title': request.POST.getlist('name')[0],
-            'time': request.POST.getlist('name')[1],
-            'description': request.POST.getlist('description')[0]
-        }
-        # data['image'] = request.FILES.get('file')
-        tags = {
-            'breakfast': False,
-            'lunch': False,
-            'dinner': False
-        }
-        for eat in ['breakfast', 'lunch', 'dinner']:
-            if request.POST.getlist(eat):
-                tags[eat] = True
-
+        old_recipe_ingredients = recipe.recipe_ingredients.all()
+        if not old_recipe_ingredients:
+            errors['ingredient'] = True
+        data, tags = get_data_tags(request)
         form = RecipeForm(data=data)
-
-        if form.is_valid():
+        image = request.FILES.get('file')
+        if image and 'image' not in image.content_type:
+            errors['image'] = True
+        else:
+            errors['image'] = False
+        if form.is_valid() and old_recipe_ingredients and not errors['image']:
             recipe.title = form.cleaned_data.get('title')
             recipe.description = form.cleaned_data.get('description')
             recipe.time = form.cleaned_data.get('time')
-            if request.FILES.get('file'):
-                recipe.image = request.FILES.get('file')
-            if tags['breakfast']:
-                recipe.is_breakfast = True
-            else:
-                recipe.is_breakfast = False
-            if tags['dinner']:
-                recipe.is_dinner = True
-            else:
-                recipe.is_dinner = False
-            if tags['lunch']:
-                recipe.is_lunch = True
-            else:
-                recipe.is_lunch = False
+            recipe = update_tags(tags, recipe)
             recipe.author = request.user
             recipe.save()
             return redirect("recipe", recipe.pk)
-        return render(request, "edit.html", {"errors": form.errors})
-    form = RecipeForm()
+        for error in form.errors:
+            errors[error] = True
+        ingredients = recipe.recipe_ingredients.all()
+        return render(
+            request,
+            "edit.html",
+            {
+                'recipe': recipe,
+                'ingredients': ingredients,
+                "errors": errors,
+                'shopping_count': shopping_count,
+            }
+        )
     ingredients = recipe.recipe_ingredients.all()
     return render(
         request,
         "edit.html",
         {
-            "form": form,
             'recipe': recipe,
             'ingredients': ingredients,
             'shopping_count': shopping_count,

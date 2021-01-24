@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Технологии{% endblock %}
+
+
+        {% block css %}
+        <link rel="stylesheet" href="{% static 'pages/index.css' %}">
+        {% endblock css %}
+
+
+{% block content %}
+<main class="main container">
+    <div class="custom-center-block">
+        <h2 class="single-card__section-title">Технологии</h2>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.python.org/" class="nav__link link">Python</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.djangoproject.com/" class="nav__link link">Django</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" class="nav__link link">JavaScript</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.w3schools.com/css/" class="nav__link link">CSS</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.docker.com/" class="nav__link link">Docker</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.nginx.com/" class="nav__link link">NGINX</a>
+    </div>
+    <div class="single-card__section">
+        <a href="https://www.postgresql.org/" class="nav__link link">PostgreSQL</a>
+    </div>
+</main>
+{% endblock content%}
+
