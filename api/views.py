@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from recipes.models import Ingredient, Recipe, Favorite, ShoppingList
@@ -24,6 +24,7 @@ def get_ingredient(request):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def add_favorite(request):
     favorite = Favorite.objects.filter(
         user=request.user,
@@ -36,6 +37,7 @@ def add_favorite(request):
 
 
 @api_view(['DELETE'])
+@permission_classes((IsAuthenticated,))
 def delete_favorite(request, recipe_id):
     favorites = Favorite.objects.filter(
         user=request.user,
@@ -47,6 +49,7 @@ def delete_favorite(request, recipe_id):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def add_subscription(request):
     subscription = Subscription.objects.filter(
         user=request.user,
@@ -59,6 +62,7 @@ def add_subscription(request):
 
 
 @api_view(['DELETE'])
+@permission_classes((IsAuthenticated,))
 def delete_subscription(request, user_id):
     subscriptions = Subscription.objects.filter(
         user=request.user,
@@ -70,6 +74,7 @@ def delete_subscription(request, user_id):
 
 
 @api_view(['POST'])
+@permission_classes((IsAuthenticated,))
 def add_purchase(request):
     shopping_list = ShoppingList.objects.filter(
         user=request.user,
@@ -82,6 +87,7 @@ def add_purchase(request):
 
 
 @api_view(['DELETE'])
+@permission_classes((IsAuthenticated,))
 def delete_purchase(request, recipe_id):
     shopping_list = ShoppingList.objects.filter(
         user=request.user,

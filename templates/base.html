@@ -8,24 +8,20 @@
     <title>{% block title %} {% endblock %} </title>
     {% load static %}
     {% block css %}
-
-        {% endblock css %}
+    {% endblock css %}
 </head>
-<body class="body">
-{% include 'nav.html' %}
-
+    <body class="body">
+        {% include 'nav.html' %}
 
         {% block content %}
-        <!-- Содержимое страницы -->
+
         {% endblock content %}
 
-{% include 'footer.html' %}
+        {% include 'footer.html' %}
 
-{% block scripts %}
+        {% block scripts %}
 
-{% endblock scripts %}
-
-</body>
+        {% endblock scripts %}
+    </body>
 
 </html>
-

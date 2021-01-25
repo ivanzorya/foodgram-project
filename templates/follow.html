@@ -2,85 +2,76 @@
 {% load static %}
 {% block title %}Мои подписки{% endblock %}
 
-        {% block css %}
-           <link rel="stylesheet" href="{% static 'pages/myFollow.css' %}">
-        {% endblock css %}
+{% block css %}
+   <link rel="stylesheet" href="{% static 'pages/myFollow.css' %}">
+{% endblock css %}
 
 
 
 
 {% block content %}
-
-<main class="main container">
-    <div class="main__header">
-        <h1 class="main__title">Мои подписки</h1>
-    </div>
-    <div class="card-list">
-
-        {% csrf_token %}
-
-
-        {% for el in data %}
-
-        <div class="card-user" data-author="{{ el.author.pk }}">
-        <div class="card-user__header">
-            <h2 class="card-user__title">{{ el.author.username }}</h2>
+    <main class="main container">
+        <div class="main__header">
+            <h1 class="main__title">Мои подписки</h1>
         </div>
-        <div class="card-user__body">
-            <ul class="card-user__items">
+        <div class="card-list">
 
-                {% for recipe in el.recipes %}
+            {% csrf_token %}
 
-                <li class="card-user__item">
-                    <div class="recipe">
-                        <img src="{{ recipe.image.url }}" alt="какой-то-текст" class="recipe__image">
-                        <h3 class="recipe__title">{{ recipe.title }}</h3>
-                        <p class="recipe__text"><span class="icon-time"></span> {{ recipe.time }} мин.</p>
+            {% for el in data %}
+
+                <div class="card-user" data-author="{{ el.author.pk }}">
+                    <div class="card-user__header">
+                        <h2 class="card-user__title">{{ el.author.username }}</h2>
                     </div>
-                </li>
+                    <div class="card-user__body">
+                        <ul class="card-user__items">
 
-                {% endfor %}
+                            {% for recipe in el.recipes %}
 
-                {% if el.count > 0 %}
-                <li class="card-user__item">
-                    <a href="{% url 'author' el.author.pk %}" class="card-user__link link">Другие рецепты автора</a>
-                </li>
-                {% endif %}
+                            <li class="card-user__item">
+                                <div class="recipe">
+                                    <img src="{{ recipe.image.url }}" alt="какой-то-текст" class="recipe__image">
+                                    <h3 class="recipe__title">{{ recipe.title }}</h3>
+                                    <p class="recipe__text"><span class="icon-time"></span> {{ recipe.time }} мин.</p>
+                                </div>
+                            </li>
 
-            </ul>
+                            {% endfor %}
+
+                            {% if el.count > 0 %}
+                            <li class="card-user__item">
+                                <a href="{% url 'author' el.author.pk %}" class="card-user__link link">Другие рецепты автора</a>
+                            </li>
+                            {% endif %}
+
+                        </ul>
+                    </div>
+                    <div class="card-user__footer">
+                        <button class="button button_style_light-blue button_size_auto" name="subscribe">Отписаться</button>
+                    </div>
+                </div>
+
+            {% endfor %}
+
         </div>
-        <div class="card-user__footer">
-                <button class="button button_style_light-blue button_size_auto" name="subscribe">Отписаться</button>
-            </div>
-    </div>
 
-    {% endfor %}
+        {% if data.has_other_pages %}
+            {% include "paginator.html" with items=data paginator=paginator %}
+        {% endif %}
 
-
-    </div>
-
-
-    {% if data.has_other_pages %}
-        {% include "paginator.html" with items=data paginator=paginator %}
-    {% endif %}
-
-</main>
-
+    </main>
 {% endblock content%}
 
 
 {% block scripts %}
-
 
     <script src="{% static 'js/config/config.js' %}"></script>
     <script src="{% static 'js/components/MainCards.js' %}"></script>
     <script src="{% static 'js/components/MyFollow.js' %}"></script>
     <script src="{% static 'js/components/Subscribe.js' %}"></script>
     <script src="{% static 'js/components/Header.js' %}"></script>
-
     <script src="{% static 'js/api/Api.js' %}"></script>
-
-
     <script src="{% static 'myFollow.js' %}"></script>
 
 

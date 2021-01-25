@@ -10,5 +10,4 @@ urlpatterns = [
     path('subscriptions/<int:user_id>/', views.delete_subscription),
     path('purchases/', views.add_purchase),
     path('purchases/<int:recipe_id>/', views.delete_purchase),
-
 ]

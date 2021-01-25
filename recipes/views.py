@@ -244,7 +244,7 @@ def get_txt(request):
     return response
 
 
-def new(request):
+def new_recipe(request):
     if not request.user.is_authenticated:
         return redirect("index")
     shopping_count, _ = shopping_counter(request.user)
