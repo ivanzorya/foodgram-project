@@ -6,7 +6,7 @@ from recipes.models import Recipe, RecipeIngredient
 class RecipeIngredientForm(forms.ModelForm):
     class Meta:
         model = RecipeIngredient
-        fields = ["count"]
+        fields = ['count']
 
 
 class RecipeForm(forms.Form):

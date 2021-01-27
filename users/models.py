@@ -9,17 +9,17 @@ class Subscription(models.Model):
         User,
         null=True,
         on_delete=models.CASCADE,
-        related_name="subscriptions",
-        verbose_name="Подписчик"
+        related_name='subscriptions',
+        verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
         null=True,
         on_delete=models.CASCADE,
-        verbose_name="Автор"
+        verbose_name='Автор'
     )
 
     class Meta:
-        verbose_name = "Подписка"
-        verbose_name_plural = "Подписки"
-        ordering = ["author"]
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        ordering = ['author']

@@ -8,14 +8,14 @@ User = get_user_model()
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("pk", "user", "author")
+    list_display = ('pk', 'user', 'author')
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("pk", "username", "email", "is_active", 'is_staff')
-    list_editable = ("is_active", 'is_staff')
-    list_filter = ("username", "email", "is_active", 'is_staff')
-    search_fields = ("username", )
+    list_display = ('pk', 'username', 'email', 'is_active', 'is_staff')
+    list_editable = ('is_active', 'is_staff')
+    list_filter = ('username', 'email', 'is_active', 'is_staff')
+    search_fields = ('username', )
 
 
 admin.site.register(Subscription, SubscriptionAdmin)

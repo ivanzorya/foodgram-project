@@ -44,7 +44,7 @@
                     </div>
                     <div class="card__footer">
                     {% if user.is_authenticated %}
-                        {% if el.pk in shopping_recipes %}
+                        {% if el.pk in user.shopping_lists %}
                             <button class="button button_style_light-blue-outline" name="purchases" ><span class="icon-check button__icon"></span>Рецепт добавлен</button>
                         {% else %}
                             <button class="button button_style_light-blue" name="purchases" data-out><span class="icon-plus button__icon"></span>Добавить в покупки</button>
@@ -69,8 +69,8 @@
 
         </div>
 
-        {% if recipes.has_other_pages %}
-            {% include "paginator.html" with items=recipes paginator=paginator tag=tag %}
+        {% if page_obj.has_other_pages %}
+            {% include "paginator.html" with items=page_obj paginator=paginator tag=tag %}
         {% endif %}
 
     </main>

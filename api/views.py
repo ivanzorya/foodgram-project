@@ -26,13 +26,11 @@ def get_ingredient(request):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def add_favorite(request):
-    favorite = Favorite.objects.filter(
+    recipe = get_object_or_404(Recipe, pk=request.data.get('id'))
+    obj, created = Favorite.objects.get_or_create(
         user=request.user,
-        recipe__id=request.data.get('id')
+        recipe=recipe
     )
-    if not favorite:
-        recipe = get_object_or_404(Recipe, pk=request.data.get('id'))
-        Favorite.objects.create(user=request.user, recipe=recipe)
     return Response({}, status=status.HTTP_201_CREATED)
 
 
@@ -51,13 +49,11 @@ def delete_favorite(request, recipe_id):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def add_subscription(request):
-    subscription = Subscription.objects.filter(
+    author = get_object_or_404(User, pk=request.data.get('id'))
+    obj, created = Subscription.objects.get_or_create(
         user=request.user,
-        author__id=request.data.get('id')
+        author=author
     )
-    if not subscription:
-        author = get_object_or_404(User, pk=request.data.get('id'))
-        Subscription.objects.create(user=request.user, author=author)
     return Response({}, status=status.HTTP_201_CREATED)
 
 
@@ -76,13 +72,11 @@ def delete_subscription(request, user_id):
 @api_view(['POST'])
 @permission_classes((IsAuthenticated,))
 def add_purchase(request):
-    shopping_list = ShoppingList.objects.filter(
+    recipe = get_object_or_404(Recipe, pk=request.data.get('id'))
+    obj, created = ShoppingList.objects.get_or_create(
         user=request.user,
-        recipe__id=request.data.get('id')
+        recipe=recipe
     )
-    if not shopping_list:
-        recipe = get_object_or_404(Recipe, pk=request.data.get('id'))
-        ShoppingList.objects.create(user=request.user, recipe=recipe)
     return Response({}, status=status.HTTP_201_CREATED)
 
 

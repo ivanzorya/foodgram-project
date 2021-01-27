@@ -17,15 +17,15 @@
         <div class="card-list card-list_column">
             <ul class="shopping-list">
 
-                {% for el in recipes %}
+                {% for el in user.shopping_lists.all %}
 
-                    <li class="shopping-list__item" data-id="{{ el.pk }}">
+                    <li class="shopping-list__item" data-id="{{ el.recipe.pk }}">
                         <div class="recipe recipe_reverse">
-                            <img src="{{ el.image.url }}" alt="какой-то текст" class="recipe__image recipe__image_big">
-                            <h3 class="recipe__title">{{ el.title }}</h3>
-                            <p class="recipe__text"><span class="icon-time"></span> {{ el.time }} мин.</p>
+                            <img src="{{ el.recipe.image.url }}" alt="какой-то текст" class="recipe__image recipe__image_big">
+                            <h3 class="recipe__title">{{ el.recipe.title.capitalize }}</h3>
+                            <p class="recipe__text"><span class="icon-time"></span> {{ el.recipe.time }} мин.</p>
                         </div>
-                        <a href="{% url 'delete_shopping' el.pk %}" class="shopping-list__button link">Удалить</a>
+                        <a href="{% url 'delete_shopping' el.recipe.pk %}" class="shopping-list__button link">Удалить</a>
                     </li>
 
                 {% endfor %}
@@ -35,7 +35,7 @@
 
         </div>
     </main>
-{% endblock content%}
+{% endblock content %}
 
 
 {% block scripts %}
@@ -46,4 +46,4 @@
     <script src="{% static 'js/api/Api.js' %}"></script>
     <script src="{% static 'shopList.js' %}"></script>
 
-{% endblock scripts%}
+{% endblock scripts %}

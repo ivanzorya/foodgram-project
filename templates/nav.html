@@ -9,7 +9,7 @@
                     <li class="nav__item {% if subscription %} nav__item_active {% endif %}"><a href="{% url 'follow' %}" class="nav__link link">Мои подписки</a></li>
                     <li class="nav__item {% if new %} nav__item_active {% endif %}"><a href="{% url 'new' %}" class="nav__link link">Создать рецепт</a></li>
                     <li class="nav__item {% if favorite %} nav__item_active {% endif %}"><a href="{% url 'favorite' %}" class="nav__link link">Избранное</a></li>
-                    <li class="nav__item {% if shopping %} nav__item_active {% endif %}"><a href="{% url 'shopping' %}" class="nav__link link">Список покупок</a> <span class="badge badge_style_blue nav__badge" id="counter">{{ shopping_count }}</span></li>
+                    <li class="nav__item {% if shopping %} nav__item_active {% endif %}"><a href="{% url 'shopping' %}" class="nav__link link">Список покупок</a><span class="badge badge_style_blue nav__badge" id="counter">{% if user.shopping_lists.all.count > 0 %}{{ user.shopping_lists.all.count }}{% endif %}</span></li>
                 </ul>
                 <ul class="nav__items list">
                     <li class="nav__item"><a href="{% url 'password_change' %}" class="nav__link link">Изменить пароль</a></li>
@@ -29,6 +29,6 @@
             {% endif %}
 
         </div>
-
     </nav>
+
 </header>

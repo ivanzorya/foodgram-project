@@ -65,8 +65,8 @@
 
         </div>
 
-        {% if recipes.has_other_pages %}
-            {% include "paginator.html" with items=recipes paginator=paginator tag=tag %}
+        {% if page_obj.has_other_pages %}
+            {% include "paginator.html" with items=page_obj paginator=paginator tag=tag %}
         {% endif %}
 
     </main>
