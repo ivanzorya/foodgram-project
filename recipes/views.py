@@ -9,9 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.generic import ListView
 
 from recipes.forms import RecipeForm
-from recipes.models import (
-    Recipe, Favorite, ShoppingList
-)
+from recipes.models import Recipe, Favorite, ShoppingList
 from recipes.utils import (
     get_data_tags, shopping_counter, make_shopping_list,
     get_favorite_recipes_id, check_tags, make_ingredients, save_recipe,
